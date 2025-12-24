@@ -1,0 +1,288 @@
+*stacktrace.txt*       For Neovim >= 0.8.0       Last change: 2025 December 24
+
+==============================================================================
+Table of Contents                               *stacktrace-table-of-contents*
+
+1. stacktrace.nvim                                |stacktrace-stacktrace.nvim|
+  - Features                             |stacktrace-stacktrace.nvim-features|
+  - Installation                     |stacktrace-stacktrace.nvim-installation|
+  - Usage                                   |stacktrace-stacktrace.nvim-usage|
+  - Configuration                   |stacktrace-stacktrace.nvim-configuration|
+  - Supported Stack Trace Formats|stacktrace-stacktrace.nvim-supported-stack-trace-formats|
+  - Custom UI                           |stacktrace-stacktrace.nvim-custom-ui|
+  - How It Works                     |stacktrace-stacktrace.nvim-how-it-works|
+  - Development                       |stacktrace-stacktrace.nvim-development|
+  - License                               |stacktrace-stacktrace.nvim-license|
+  - Contributing                     |stacktrace-stacktrace.nvim-contributing|
+2. Links                                                    |stacktrace-links|
+
+==============================================================================
+1. stacktrace.nvim                                *stacktrace-stacktrace.nvim*
+
+A Neovim plugin for analyzing stack traces with intelligent file path
+resolution and quick navigation. Similar to IntelliJ’s "Analyze Stack Trace"
+feature.
+
+
+FEATURES                                 *stacktrace-stacktrace.nvim-features*
+
+- **Smart Path Resolution**: Automatically resolves file paths using git root, cwd, and custom search paths
+- **Fuzzy Matching**: Finds files even with partial paths in stack traces
+- **Multi-Language Support**: Works with Python, JavaScript/TypeScript, Java, Rust, Go, and more
+- **Pluggable Parser System**: Register custom parsers for specific languages or formats
+- **Customizable UI**: Default split window with options for floating window or custom display function
+- **Quick Navigation**: Click or press Enter to jump to files, navigate between frames
+- **Syntax Highlighting**: Highlighted file paths (resolved vs unresolved), line numbers, and errors
+- **Zero Dependencies**: Uses only Neovim built-in APIs
+
+
+INSTALLATION                         *stacktrace-stacktrace.nvim-installation*
+
+
+USING LAZY.NVIM ~
+
+>lua
+    {
+      "yourusername/stacktrace.nvim",
+      config = function()
+        require("stacktrace").setup()
+      end,
+    }
+<
+
+
+USING PACKER.NVIM ~
+
+>lua
+    use {
+      "yourusername/stacktrace.nvim",
+      config = function()
+        require("stacktrace").setup()
+      end
+    }
+<
+
+
+USAGE                                       *stacktrace-stacktrace.nvim-usage*
+
+
+COMMANDS ~
+
+- `:StacktraceAnalyze` - Opens a prompt to paste or enter a stack trace
+- `:StacktraceFromClipboard` - Analyzes stack trace from system clipboard
+- `:StacktraceFromSelection` - Analyzes visually selected text as a stack trace
+
+
+KEYMAPS (IN STACKTRACE WINDOW) ~
+
+- `<CR>` (Enter) - Jump to file location under cursor
+- `<LeftMouse>` - Click to jump to file location
+- `]s` - Navigate to next stack frame
+- `[s` - Navigate to previous stack frame
+- `q` or `<Esc>` - Close stacktrace window
+
+
+BASIC EXAMPLE ~
+
+1. Copy a stack trace to your clipboard
+2. Run `:StacktraceFromClipboard`
+3. Navigate with `]s`/`[s]` or click/press Enter on lines with file paths
+4. Files will open at the correct line and column
+
+
+PROGRAMMATIC USAGE ~
+
+>lua
+    local stacktrace = require("stacktrace")
+    
+    -- Analyze a stack trace string
+    stacktrace.analyze_stacktrace([[
+      File "/path/to/file.py", line 42, in main
+        raise ValueError("error")
+    ]])
+    
+    -- From clipboard
+    stacktrace.analyze_from_clipboard()
+    
+    -- From visual selection
+    stacktrace.analyze_from_selection()
+<
+
+
+CONFIGURATION                       *stacktrace-stacktrace.nvim-configuration*
+
+>lua
+    require("stacktrace").setup({
+      -- Custom parsers (optional)
+      parsers = {
+        -- Register a custom parser
+        custom_format = function(text)
+          -- Return array of frames: { file_path, line, column, raw_line, line_number }
+          return {}
+        end,
+      },
+    
+      -- Additional search paths for file resolution
+      search_paths = {
+        "~/projects",
+        "/usr/local/src",
+      },
+    
+      -- UI configuration
+      ui = {
+        -- Custom UI function (optional)
+        -- If provided, this will be called instead of the default window
+        open_fn = nil,
+    
+        -- Window type: "split" (default), "vsplit", or "float"
+        window_type = "split",
+    
+        -- Split window options (used when window_type is "split" or "vsplit")
+        split_opts = {
+          position = "below", -- "below", "above", "left", "right"
+          size = 15,          -- height for horizontal splits, width for vertical splits
+        },
+    
+        -- Floating window options (used when window_type is "float")
+        float_opts = {
+          border = "rounded", -- "none", "single", "double", "rounded", "solid", "shadow"
+          max_width = 120,
+          max_height = 40,
+        },
+      },
+    
+      -- Keymap configuration
+      keymaps = {
+        jump = "<CR>",
+        close = "q",
+        next_frame = "]s",
+        prev_frame = "[s",
+      },
+    })
+<
+
+
+SUPPORTED STACK TRACE FORMATS*stacktrace-stacktrace.nvim-supported-stack-trace-formats*
+
+The plugin includes a generic parser that recognizes common patterns across
+many languages:
+
+- **Python**: `File "/path/to/file.py", line 42, in function`
+- **JavaScript/Node.js**: `at Object.<anonymous> (/path/to/file.js:15:10)`
+- **Java**: `at package.Class.method(File.java:123)`
+- **Rust**: `--> src/main.rs:42:5`
+- **Go**: `/path/to/file.go:123 +0x45`
+- **Generic**: `/path/to/file.ext:line:column`
+
+
+CUSTOM PARSERS ~
+
+You can register language-specific parsers for better accuracy:
+
+>lua
+    local parser = require("stacktrace.parser")
+    
+    parser.register_parser("my_language", function(text)
+      local frames = {}
+      -- Parse text and extract frames
+      return frames
+    end)
+    
+    -- Use the custom parser
+    stacktrace.analyze_stacktrace(trace_text, "my_language")
+<
+
+
+ADDING CUSTOM PATTERNS ~
+
+For simple cases, you can add patterns to the default parser:
+
+>lua
+    local parser = require("stacktrace.parser")
+    
+    parser.add_pattern({
+      pattern = "your_pattern_here",
+      file = 1,    -- capture group index for file path
+      line = 2,    -- capture group index for line number
+      column = 3,  -- capture group index for column (optional)
+    })
+<
+
+
+CUSTOM UI                               *stacktrace-stacktrace.nvim-custom-ui*
+
+The default is a split window at the bottom of your screen. You can change to a
+floating window:
+
+>lua
+    require("stacktrace").setup({
+      ui = {
+        window_type = "float",
+      },
+    })
+<
+
+Or provide your own UI function for complete control:
+
+>lua
+    require("stacktrace").setup({
+      ui = {
+        open_fn = function(text, resolved_frames)
+          -- text: original stack trace text
+          -- resolved_frames: array of parsed and resolved frames
+    
+          -- Create your custom UI here
+          -- ... set up buffer and highlighting
+        end,
+      },
+    })
+<
+
+
+HOW IT WORKS                         *stacktrace-stacktrace.nvim-how-it-works*
+
+1. **Parsing**: The parser scans each line for file path patterns and extracts file, line, and column information
+2. **Resolution**: Each file path is resolved using:- Git repository root (detected via `.git` directory)
+- Current working directory
+- Custom search paths from configuration
+- Fuzzy matching for partial paths
+
+
+3. **Display**: Stack trace is shown in a floating window with syntax highlighting
+4. **Navigation**: Clicking or pressing Enter on a line jumps to the resolved file location
+
+
+DEVELOPMENT                           *stacktrace-stacktrace.nvim-development*
+
+
+RUNNING TESTS ~
+
+>bash
+    make test
+<
+
+
+FORMATTING ~
+
+>bash
+    stylua lua/
+<
+
+
+LICENSE                                   *stacktrace-stacktrace.nvim-license*
+
+MIT
+
+
+CONTRIBUTING                         *stacktrace-stacktrace.nvim-contributing*
+
+Contributions are welcome! Please feel free to submit a Pull Request.
+
+==============================================================================
+2. Links                                                    *stacktrace-links*
+
+1. *Lua*: https://img.shields.io/badge/Made%20with%20Lua-blueviolet.svg?style=for-the-badge&logo=lua
+
+Generated by panvimdoc <https://github.com/kdheepak/panvimdoc>
+
+vim:tw=78:ts=8:noet:ft=help:norl:
