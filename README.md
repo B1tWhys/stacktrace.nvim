@@ -22,7 +22,7 @@ A Neovim plugin for analyzing stack traces with intelligent file path resolution
 
 ```lua
 {
-  "yourusername/stacktrace.nvim",
+  "B1tWhys/stacktrace.nvim",
   config = function()
     require("stacktrace").setup()
   end,
@@ -33,7 +33,7 @@ A Neovim plugin for analyzing stack traces with intelligent file path resolution
 
 ```lua
 use {
-  "yourusername/stacktrace.nvim",
+  "B1tWhys/stacktrace.nvim",
   config = function()
     require("stacktrace").setup()
   end
