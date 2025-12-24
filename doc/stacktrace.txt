@@ -45,7 +45,7 @@ USING LAZY.NVIM ~
 
 >lua
     {
-      "yourusername/stacktrace.nvim",
+      "B1tWhys/stacktrace.nvim",
       config = function()
         require("stacktrace").setup()
       end,
@@ -57,7 +57,7 @@ USING PACKER.NVIM ~
 
 >lua
     use {
-      "yourusername/stacktrace.nvim",
+      "B1tWhys/stacktrace.nvim",
       config = function()
         require("stacktrace").setup()
       end
