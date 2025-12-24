@@ -1,6 +1,7 @@
 # stacktrace.nvim
 
-![Lua](https://img.shields.io/badge/Made%20with%20Lua-blueviolet.svg?style=for-the-badge&logo=lua)
+![Lint and Test](https://github.com/B1tWhys/stacktrace.nvim/actions/workflows/lint-test.yml/badge.svg)
+![Docs](https://github.com/B1tWhys/stacktrace.nvim/actions/workflows/docs.yml/badge.svg)
 
 A Neovim plugin for analyzing stack traces with intelligent file path resolution and quick navigation. Similar to IntelliJ's "Analyze Stack Trace" feature.
 
